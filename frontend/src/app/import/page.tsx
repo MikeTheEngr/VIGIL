@@ -14,11 +14,11 @@ interface ImportResult {
   errors: string[]
 }
 
-const IMPORT_TYPES: { key: ImportType; label: string; description: string; icon: string }[] = [
-  { key: 'equipment', label: 'EQUIPMENT',  description: 'Turbines, compressors, pumps, motors'},
-  { key: 'pipelines', label: 'PIPELINES',  description: 'Pipeline segments and corridors',       },
-  { key: 'sensors',   label: 'SENSORS',    description: 'Sensor definitions linked to assets',    },
-  { key: 'readings',  label: 'READINGS',   description: 'Historical sensor time-series data',    },
+const IMPORT_TYPES: { key: ImportType; label: string; description: string }[] = [
+  { key: 'equipment', label: 'EQUIPMENT', description: 'Turbines, compressors, pumps, motors' },
+  { key: 'pipelines', label: 'PIPELINES', description: 'Pipeline segments and corridors' },
+  { key: 'sensors',   label: 'SENSORS',   description: 'Sensor definitions linked to assets' },
+  { key: 'readings',  label: 'READINGS',  description: 'Historical sensor time-series data' },
 ]
 
 const TEMPLATES: Record<ImportType, { headers: string[]; example: string[] }> = {
