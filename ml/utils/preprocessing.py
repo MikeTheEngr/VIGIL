@@ -1,16 +1,28 @@
+"""
+Feature engineering for the Predictive Maintenance model.
+Works with real NASA CMAPSS files or the synthetic generator output —
+same column format: unit_id, cycle, op1-3, s1-s21.
+"""
 import pandas as pd
 import numpy as np
 
+# Sensors dropped for near-zero variance / no predictive signal
+# (standard finding across CMAPSS literature for FD001)
 DROP_SENSORS = ['s1', 's5', 's6', 's10', 's16', 's18', 's19']
+
 ALL_SENSORS = [f's{i}' for i in range(1, 22)]
 USED_SENSORS = [s for s in ALL_SENSORS if s not in DROP_SENSORS]
 
 
 def load_cmapss(path: str) -> pd.DataFrame:
+    """Load a CMAPSS-format file — handles both raw NASA .txt and our CSV."""
     if path.endswith('.csv'):
         df = pd.read_csv(path)
     else:
+        # Real NASA CMAPSS .txt files are space-separated with trailing spaces
+        # creating 26 usable columns (unit_id, cycle, op1-3, s1-s21 = 26)
         df = pd.read_csv(path, sep=r'\s+', header=None)
+        # Drop any fully-NaN trailing columns
         df.dropna(axis=1, how='all', inplace=True)
         expected_cols = ['unit_id', 'cycle', 'op1', 'op2', 'op3'] + ALL_SENSORS
         df = df.iloc[:, :len(expected_cols)]
@@ -19,6 +31,7 @@ def load_cmapss(path: str) -> pd.DataFrame:
 
 
 def add_rul_labels(df: pd.DataFrame, cap: int = 125) -> pd.DataFrame:
+    """Compute Remaining Useful Life per row, capped (piecewise-linear assumption)."""
     df = df.copy()
     max_cycles = df.groupby('unit_id')['cycle'].max().reset_index()
     max_cycles.columns = ['unit_id', 'max_cycle']
@@ -28,16 +41,20 @@ def add_rul_labels(df: pd.DataFrame, cap: int = 125) -> pd.DataFrame:
 
 
 def engineer_features(df: pd.DataFrame) -> pd.DataFrame:
+    """Rolling stats + deltas per engine, using only the retained sensors."""
     df = df.copy()
+
     for col in USED_SENSORS:
         grp = df.groupby('unit_id')[col]
         df[f'{col}_mean5']  = grp.transform(lambda x: x.rolling(5,  min_periods=1).mean())
         df[f'{col}_std5']   = grp.transform(lambda x: x.rolling(5,  min_periods=1).std().fillna(0))
         df[f'{col}_mean10'] = grp.transform(lambda x: x.rolling(10, min_periods=1).mean())
         df[f'{col}_delta']  = grp.transform(lambda x: x.diff().fillna(0))
+
     df['cycle_norm'] = df.groupby('unit_id')['cycle'].transform(
         lambda x: (x - x.min()) / (x.max() - x.min() + 1e-8)
     )
+
     return df
 
 
@@ -47,6 +64,7 @@ def get_feature_columns(df: pd.DataFrame) -> list:
 
 
 def rul_to_health_score(rul: float, max_rul: int = 125) -> float:
+    """Convert RUL (cycles/days) to a 0-100 health score."""
     return round(min(100.0, max(0.0, (rul / max_rul) * 100)), 2)
 
 

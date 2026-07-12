@@ -13,6 +13,9 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', '..'))
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
+from ml.models.maintenance.predict import predict_rul
+from ml.models.leak_detection.predict import predict_leak
+
 
 def get_equipment_sensor_features(db: Session, equipment_id: str) -> dict | None:
     """
@@ -64,7 +67,6 @@ def get_pipeline_sensor_readings(db: Session, pipeline_id: str) -> dict | None:
 
 def run_equipment_prediction(db: Session, equipment_id: str, feature_dict: dict) -> dict:
     """Runs the maintenance model and writes the result to the DB."""
-    from ml.models.maintenance.predict import predict_rul 
     result = predict_rul(feature_dict)
 
     db.execute(text("""
@@ -100,7 +102,6 @@ def run_equipment_prediction(db: Session, equipment_id: str, feature_dict: dict)
 
 def run_pipeline_prediction(db: Session, pipeline_id: str, sensor_readings: dict) -> dict:
     """Runs the leak detection model and writes the result to the DB."""
-    from ml.models.leak_detection.predict import predict_leak 
     result = predict_leak(sensor_readings)
 
     db.execute(text("""

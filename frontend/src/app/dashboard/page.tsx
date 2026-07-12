@@ -8,6 +8,7 @@ import LiveClock from '@/components/ui/LiveClock'
 import EquipmentTable from '@/components/equipment/EquipmentTable'
 import PipelineTable from '@/components/pipeline/PipelineTable'
 import AlertFeed from '@/components/alerts/AlertFeed'
+import OnboardingScreen from '@/components/onboarding/OnboardingScreen'
 import { api } from '@/lib/api'
 import { Equipment, Pipeline, Alert, EquipmentSummary, PipelineSummary, AlertCount } from '@/lib/types'
 
@@ -20,6 +21,7 @@ export default function DashboardPage() {
   const [alerts,           setAlerts]           = useState<Alert[]>([])
   const [loading,          setLoading]          = useState(true)
   const [error,            setError]            = useState(false)
+  const [isEmpty,          setIsEmpty]          = useState(false)
 
   useEffect(() => {
     const load = async () => {
@@ -39,6 +41,9 @@ export default function DashboardPage() {
         setPipelines(pl.data)
         setAlerts(al.data)
         setError(false)
+
+        // Show onboarding if no equipment AND no pipelines
+        setIsEmpty(eqSum.data.total === 0 && plSum.data.total === 0)
       } catch {
         setError(true)
       } finally {
@@ -53,47 +58,49 @@ export default function DashboardPage() {
   return (
     <div className="min-h-screen">
       <Navbar />
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6 sm:space-y-8">
 
-        {/* Status bar */}
-        <div className="flex items-center justify-between gap-4 flex-wrap">
-          <SectionLabel>SYSTEM STATUS</SectionLabel>
-          <LiveClock />
-        </div>
+      {/* Onboarding state */}
+      {!loading && !error && isEmpty && <OnboardingScreen />}
 
-        {error && (
-          <div className="border border-vg-critical/40 bg-vg-critical/10 px-4 py-3 font-mono text-xs text-vg-critical">
-            CONNECTION TO BACKEND FAILED — check API server is running
+      {/* Normal dashboard */}
+      {(!isEmpty || error) && (
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6 sm:space-y-8">
+
+          <div className="flex items-center justify-between gap-4 flex-wrap">
+            <SectionLabel>SYSTEM STATUS</SectionLabel>
+            <LiveClock />
           </div>
-        )}
 
-        {/* Stat cards — 2 cols on mobile, 4 on desktop */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-          <StatCard label="EQUIPMENT" value={equipmentSummary?.total} />
-          <StatCard label="PIPELINES" value={pipelineSummary?.total} />
-          <StatCard label="CRITICAL"  value={alertCount?.critical} variant="critical" />
-          <StatCard label="WARNINGS"  value={alertCount?.warning}  variant="warning" />
-        </div>
+          {error && (
+            <div className="border border-vg-critical/40 bg-vg-critical/10 px-4 py-3 font-mono text-xs text-vg-critical">
+              CONNECTION TO BACKEND FAILED — check API server is running
+            </div>
+          )}
 
-        {/* Equipment */}
-        <div className="space-y-3 sm:space-y-4">
-          <SectionLabel>EQUIPMENT HEALTH</SectionLabel>
-          {loading ? <Skeleton /> : <EquipmentTable data={equipment} />}
-        </div>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+            <StatCard label="EQUIPMENT" value={equipmentSummary?.total} />
+            <StatCard label="PIPELINES" value={pipelineSummary?.total} />
+            <StatCard label="CRITICAL"  value={alertCount?.critical} variant="critical" />
+            <StatCard label="WARNINGS"  value={alertCount?.warning}  variant="warning" />
+          </div>
 
-        {/* Pipelines */}
-        <div className="space-y-3 sm:space-y-4">
-          <SectionLabel>PIPELINE STATUS</SectionLabel>
-          {loading ? <Skeleton /> : <PipelineTable data={pipelines} />}
-        </div>
+          <div className="space-y-3 sm:space-y-4">
+            <SectionLabel>EQUIPMENT HEALTH</SectionLabel>
+            {loading ? <Skeleton /> : <EquipmentTable data={equipment} />}
+          </div>
 
-        {/* Alerts */}
-        <div className="space-y-3 sm:space-y-4">
-          <SectionLabel>ACTIVE ALERTS</SectionLabel>
-          {loading ? <Skeleton /> : <AlertFeed alerts={alerts} />}
-        </div>
+          <div className="space-y-3 sm:space-y-4">
+            <SectionLabel>PIPELINE STATUS</SectionLabel>
+            {loading ? <Skeleton /> : <PipelineTable data={pipelines} />}
+          </div>
 
-      </main>
+          <div className="space-y-3 sm:space-y-4">
+            <SectionLabel>ACTIVE ALERTS</SectionLabel>
+            {loading ? <Skeleton /> : <AlertFeed alerts={alerts} />}
+          </div>
+
+        </main>
+      )}
     </div>
   )
 }

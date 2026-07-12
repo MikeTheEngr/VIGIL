@@ -10,6 +10,7 @@ const LINKS = [
   { href: '/equipment',  label: 'EQUIPMENT' },
   { href: '/pipelines',  label: 'PIPELINES' },
   { href: '/alerts',     label: 'ALERTS' },
+  { href: '/import',     label: 'IMPORT' },
 ]
 
 export default function Navbar() {

@@ -18,7 +18,7 @@ from ml.utils.preprocessing import (
     get_feature_columns, rul_to_health_score
 )
 
-DATA_PATH  = r'C:\Users\HP\Desktop\V I G I L\ml\data\raw\train_FD001.txt'
+DATA_PATH  = 'ml/data/raw/train_FD001.txt'
 MODEL_DIR  = 'ml/models/maintenance'
 
 
