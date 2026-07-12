@@ -16,9 +16,9 @@ interface ImportResult {
 
 const IMPORT_TYPES: { key: ImportType; label: string; description: string }[] = [
   { key: 'equipment', label: 'EQUIPMENT',  description: 'Turbines, compressors, pumps, motors' },
-  { key: 'pipelines', label: 'PIPELINES',  description: 'Pipeline segments and corridors',       icon: '🛢️' },
-  { key: 'sensors',   label: 'SENSORS',    description: 'Sensor definitions linked to assets',   icon: '📡' },
-  { key: 'readings',  label: 'READINGS',   description: 'Historical sensor time-series data',    icon: '📊' },
+  { key: 'pipelines', label: 'PIPELINES',  description: 'Pipeline segments and corridors' },
+  { key: 'sensors',   label: 'SENSORS',    description: 'Sensor definitions linked to assets' },
+  { key: 'readings',  label: 'READINGS',   description: 'Historical sensor time-series data' },
 ]
 
 const TEMPLATES: Record<ImportType, { headers: string[]; example: string[] }> = {
@@ -58,7 +58,7 @@ function UploadZone({
   type: ImportType
   label: string
   description: string
-  onResult: (type: ImportType, result: ImportResult) => void
+    onResult: (type: ImportType, result: ImportResult) => void
 }) {
   const [dragging, setDragging] = useState(false)
   const [uploading, setUploading] = useState(false)
@@ -113,7 +113,7 @@ function UploadZone({
     >
       <input ref={inputRef} type="file" accept=".csv" className="hidden" onChange={handleChange} />
 
-      <div className="flex items-start ">
+      <div className="flex items-start gap-4">
                 <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between flex-wrap gap-2">
             <span className="font-mono text-[11px] tracking-[3px] text-vg-steel font-semibold">{label}</span>
@@ -161,7 +161,7 @@ function ResultCard({ type, result }: { type: ImportType; result: ImportResult }
           {isSuccess ? '✓ IMPORTED' : '✗ FAILED'}
         </span>
       </div>
-      <div className="flex  font-mono text-xs">
+      <div className="flex gap-4 font-mono text-xs">
         <span className="text-vg-nominal">↑ {result.inserted} inserted</span>
         {result.skipped > 0 && <span className="text-vg-warning">⚠ {result.skipped} skipped</span>}
       </div>
