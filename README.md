@@ -1,18 +1,57 @@
-# VIGIL
+<div align="center">
+ 
+```
 
-**Predictive Intelligence for Industrial Infrastructure**
 
-Vigil is an AI-powered industrial monitoring platform that watches over critical equipment and pipeline infrastructure — forecasting failures before they happen and detecting leaks through real-time anomaly detection.
+██╗   ██╗  ║██╗   ██████╗    ║██╗  ║██╗     
+██║   ██║  ║██║  ║██╔════╝   ║██║  ║██║     
+██║   ██║  ║██║  ║██║  ███╗  ║██║  ║██║     
+╚██╗ ██╔╝  ║██║  ║██║   ██║  ║██║  ║██║     
+ ╚████╔╝   ║██║  ╚ ██████╔╝  ║██║  ║███████╗
+  ╚═══╝    ╚══╝    ╚══════╝  ╚══╝  ╚═══════╝
+
+```
+</div>
+
+
+### Predictive Intelligence for Industrial Infrastructure
+
+
+![Vigil Dashboard](https://raw.githubusercontent.com/MikeTheEngr/V-I-G-I-L/main/vigil.gif)
+
+> Always watching. Always ready.
+---
+
+## What is Vigil?
+
+Vigil - Virtual Infra Growth Intelligence Layer. <br>
+Vigil is an AI-powered industrial monitoring platform that continuously watches over critical equipment and pipeline infrastructure, detecting anomalies, predicting failures before they happen, and alerting operators in real time.
+
+Built to demonstrate production-grade ML engineering, full-stack development, and industrial AI system design.
 
 ---
 
-## What it does
+## Core Intelligence
 
-**Predictive Maintenance Engine** — analyzes equipment sensor data (temperature, vibration, RPM) and forecasts Remaining Useful Life (RUL) using a GradientBoosting regression model trained on turbofan degradation data, surfacing a health score and risk level before failure occurs.
+### Predictive Maintenance Engine
+Analyses equipment sensor data (temperature, vibration, RPM, pressure) and forecasts **Remaining Useful Life (RUL)** using a **GradientBoosting regression model** trained on the NASA CMAPSS turbofan engine degradation dataset (20,631 readings across 100 real engines).
 
-**Pipeline Leak Detection** — monitors pipeline sensor streams (pressure, flow rate, acoustic emission) for the physical signature of a leak, using an ensemble of a supervised classifier and an unsupervised isolation forest to catch both known and novel anomaly patterns.
+- MAE: **5.62 cycles** on held-out validation set
+- Outputs: health score (0–100%), RUL in days, risk level (Nominal / Watch / Warning / Critical)
+- Auto-generates alerts when equipment crosses critical thresholds
 
-Both systems feed a single live dashboard, complete with health trends, alert management, and automatic alert generation when risk thresholds are crossed.
+### Pipeline Leak Detection
+Monitors pipeline sensor streams (pressure differential, flow rate, acoustic emission, vibration) for the physical signature of a leak using a **supervised + unsupervised ensemble**:
+
+- **RandomForestClassifier** — catches known leak patterns
+- **IsolationForest** — catches novel/unknown anomalies
+- Combined weighted anomaly score (0.0–1.0)
+- ROC-AUC: **1.0** on held-out validation set
+
+---
+
+## Live Demo
+🔗 **[V I G I L](https://vigil-alpha-lovat.vercel.app/)**
 
 ---
 
@@ -20,82 +59,66 @@ Both systems feed a single live dashboard, complete with health trends, alert ma
 
 | Layer | Technology |
 |---|---|
-| Frontend | Next.js 16, TypeScript, Tailwind CSS v4, Recharts |
-| Backend | FastAPI, SQLAlchemy, APScheduler |
-| Database | TimescaleDB (PostgreSQL) — hypertables for sensor time-series |
-| ML | scikit-learn (GradientBoosting, RandomForest, IsolationForest) |
-| Infra | Docker Compose, designed for Vercel (frontend) + GCP Cloud Run (backend) |
+| **Frontend** | Next.js 16, TypeScript, Tailwind CSS v4, Recharts |
+| **Backend** | FastAPI, SQLAlchemy, APScheduler |
+| **Database** | PostgreSQL (Neon — managed serverless) |
+| **ML** | scikit-learn — GradientBoosting, RandomForest, IsolationForest |
+| **Hosting** | Vercel (frontend) + Render (backend) + Neon (database) |
 
 ---
 
-## Project structure
+## System Architecture
 
 ```
-vigil/
-├── frontend/        Next.js + TypeScript dashboard
-├── backend/          FastAPI REST API
-├── ml/                Model training, inference, synthetic data generation
-└── docker/          Dockerfiles + docker-compose for local/prod parity
-```
-
----
-
-## Running locally
-
-### With Docker (recommended)
-
-```bash
-cp .env.example .env
-# edit .env with your own POSTGRES_PASSWORD
-
-cd docker
-docker-compose up --build
-```
-
-- Frontend: http://localhost:3000
-- Backend API docs: http://localhost:8000/docs
-
-### Without Docker
-
-**1. Database** — install PostgreSQL with the TimescaleDB extension, then:
-```bash
-psql -d vigil_db -f backend/db/init.sql
-psql -d vigil_db -f backend/db/seed.sql   # optional demo data
-```
-
-**2. ML models** — train both models (synthetic data ships with the repo):
-```bash
-pip install -r backend/requirements.txt
-PYTHONPATH=. python3 ml/models/maintenance/train.py
-PYTHONPATH=. python3 ml/models/leak_detection/train.py
-```
-
-**3. Backend**
-```bash
-cd backend
-PYTHONPATH=.:.. uvicorn app.main:app --reload
-```
-
-**4. Frontend**
-```bash
-cd frontend
-npm install
-npm run dev
-```
-
-**5. Sensor simulator** (optional — generates live streaming demo data)
-```bash
-API_URL=http://localhost:8000 python3 ml/utils/simulator.py
+┌─────────────────────────────────────────────────────────┐
+│                    VIGIL DASHBOARD                      │
+│              Next.js + TypeScript (Vercel)              │
+└────────────────────────┬────────────────────────────────┘
+                         │ REST API
+┌────────────────────────▼────────────────────────────────┐
+│                   FASTAPI BACKEND                       │
+│                   Python (Render)                       │
+│                                                         │
+│  ┌─────────────────┐    ┌──────────────────────────┐   │
+│  │ Predictive      │    │ Leak Detection           │   │
+│  │ Maintenance     │    │ RandomForest +           │   │
+│  │ GradientBoosting│    │ IsolationForest ensemble │   │
+│  └────────┬────────┘    └────────────┬─────────────┘   │
+└───────────┼─────────────────────────┼─────────────────┘
+            │                         │
+┌───────────▼─────────────────────────▼─────────────────┐
+│                    POSTGRESQL                          │
+│              (Neon — serverless Postgres)              │
+│  equipment · pipelines · sensors · sensor_readings    │
+│  predictions · alerts · users                         │
+└────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## A note on the ML data
+## Key Features
 
-The NASA CMAPSS turbofan degradation dataset (used for the maintenance model) lives outside this repo's network-installable sources, so `ml/data/raw/train_FD001_synthetic.csv` is a generated stand-in matching CMAPSS's exact column format. Drop the real file in at the same path and `train.py` requires no code changes. The leak detection dataset is synthetic by design — it encodes the actual physics of a pipeline leak (pressure drop downstream, flow loss, acoustic spike) rather than relying on proprietary sensor logs.
+- **Live dashboard** — system status, equipment health, pipeline status, active alerts
+- **Health score trends** — 30-day history charts per equipment
+- **Real-time alert management** — acknowledge, resolve, filter by severity
+- **Automated prediction cycle** — ML models score all equipment every 15 minutes
+- **Sensor data ingestion** — bulk ingest endpoint for IoT / simulator data
+- **Responsive design** — works on desktop and mobile
 
 ---
 
-## License
+## Dataset
 
-Personal portfolio project.
+The predictive maintenance model was trained on the **NASA CMAPSS (Commercial Modular Aero-Propulsion System Simulation)** dataset — a widely used benchmark for remaining useful life prediction in turbofan engines.
+
+The leak detection model uses physics-informed synthetic data encoding the real signatures of pipeline leaks: downstream pressure drop, flow loss, and acoustic emission spike.
+
+---
+
+## About
+
+Built by **MikeTheEngr** ([@MikeTheEngrr](https://x.com/MikeTheEngrr)) — AI Engineer & Full Stack Developer.
+
+---
+
+*VIGIL — Industrial AI Monitoring · SN-VGL-001 · OPTICAL SENSOR UNIT*
